@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>Image Compressor</title>
+        <style>
+    /* Basic reset & body style */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px 40px;
+      background: #f9fafb;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #222;
+      margin-bottom: 30px;
+    }
+
+    /* Form style */
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="file"] {
+      border: 2px dashed #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    input[type="file"]:hover {
+      border-color: #007bff;
+    }
+
+    label {
+      font-weight: 600;
+      min-width: 140px;
+      text-align: right;
+    }
+
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1.5px solid #ccc;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+    }
+    select:hover {
+      border-color: #007bff;
+    }
+
+    button[type="submit"],
+    #downloadBtn {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 10px 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 3px 7px rgba(0, 123, 255, 0.4);
+    }
+
+    button[type="submit"]:hover,
+    #downloadBtn:hover {
+      background: #0056b3;
+      box-shadow: 0 5px 15px rgba(0, 86, 179, 0.6);
+    }
+
+    /* Error message */
+    p[style*="color: red"] {
+      text-align: center;
+      font-weight: 600;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* Image container & blocks */
+    .image-container {
+      display: flex;
+      gap: 40px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .image-block {
+      flex: 1 1 300px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
+      text-align: center;
+    }
+
+    .image-block h2 {
+      margin-bottom: 15px;
+      color: #444;
+    }
+
+    .image-block img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .info p {
+      margin: 6px 0;
+      font-size: 0.9rem;
+      color: #555;
+    }
+@media (max-width: 600px) {
+  form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  label {
+    text-align: left;
+    min-width: auto;
+    margin-bottom: 6px;
+  }
+
+  input[type="file"],
+  select,
+  button[type="submit"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .image-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .image-block {
+    flex: 1 1 100%;
+  }
+}
+
+  </style>
+    </head>
+    <body>
+        <h1>Compress Your Image (Less ≤ 1 MB)</h1>
+
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" required />
+            <label for="format">Select output format:</label>
+            <select name="format" id="format">
+                <option value="JPEG">JPEG</option>
+                <option value="PNG">PNG</option>
+            </select>
+            <button type="submit">Upload & Compress</button>
+        </form>
+
+        {% if error %}
+        <p style="color: red;">{{ error }}</p>
+        {% endif %}
+
+        {% if show_preview %}
+        <hr />
+        <div style="text-align: center;">
+            <button id="downloadBtn" type="button">Download Compressed
+                Image</button>
+        </div>
+
+        <hr />
+
+        <div class="image-container">
+            <div class="image-block">
+                <h2>Original Image</h2>
+                <img src="/static/temp/original.jpg" alt="Original Image" />
+                <div class="info">
+                    <p><strong>Name:</strong> {{ original.name }}</p>
+                    <p><strong>Format:</strong> {{ original.format }}</p>
+                    <p><strong>Size:</strong> {{ (original.size / 1024) |
+                        round(2) }} KB</p>
+                    <p><strong>Dimensions:</strong> {{ original.width }} × {{
+                        original.height }}</p>
+                </div>
+            </div>
+
+            <div class="image-block">
+                <h2>Compressed Image</h2>
+                <img src="/static/temp/compressed.jpg" alt="Compressed Image" />
+                <div class="info">
+                    <p><strong>Size:</strong> {{ (compressed.size / 1024) |
+                        round(2) }} KB</p>
+                    <p><strong>Dimensions:</strong> {{ compressed.width }} × {{
+                        compressed.height }}</p>
+                    <p><strong>Used JPEG Quality:</strong> {{ compressed.quality
+                        }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <script>
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = '/download';
+      link.download = true;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+    });
+  </script>
+    </body>
+</html>
